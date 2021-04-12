@@ -7,6 +7,8 @@
  */
 
 namespace App\Utility\System;
+use App\Utility\Log\CustomLogger;
+use App\Utility\Log\RequestLog;
 use EasySwoole\Http\Message\Status;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
@@ -20,11 +22,8 @@ class ExceptionHandler
         $response->withStatus(Status::CODE_INTERNAL_SERVER_ERROR);
         $response->withHeader('Content-type', 'application/json;charset=utf-8');
         $response->write(nl2br('系统错误！'));
-        $msg = getRequestLog($request);
-        $msg.= "[ ERROR ] ".$exception->getMessage();
-        $location = new Location();
-        $location->setFile($exception->getFile());
-        $location->setLine($exception->getLine());
-        Trigger::getInstance()->error($msg, E_USER_ERROR,$location);
+        RequestLog::create()->httpServer($request,$response)->setLogLevel(CustomLogger::LOG_LEVEL_ERROR)->writeLog();
+
+        Trigger::getInstance()->error($msg, E_USER_ERROR,getLocation($exception));
     }
 }

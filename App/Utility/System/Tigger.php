@@ -47,9 +47,7 @@ class Tigger implements TriggerInterface
                 return LoggerInterface::LOG_LEVEL_WARNING;
             case E_NOTICE:
             case E_USER_NOTICE:
-                return LoggerInterface::LOG_LEVEL_NOTICE;
             case E_STRICT:
-                return LoggerInterface::LOG_LEVEL_NOTICE;
             case E_DEPRECATED:
             case E_USER_DEPRECATED:
                 return LoggerInterface::LOG_LEVEL_NOTICE;

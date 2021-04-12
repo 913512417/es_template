@@ -6,6 +6,7 @@ use EasySwoole\Http\Request;
 use EasySwoole\HttpClient\Bean\Response;
 use EasySwoole\Http\Response as ServerResponse;
 use EasySwoole\HttpClient\HttpClient;
+use EasySwoole\Trigger\Location;
 
 
 class RequestLog
@@ -34,6 +35,8 @@ class RequestLog
     protected $customData;
     /** @var int */
     protected $logLevel = CustomLogger::LOG_LEVEL_INFO;
+    /** @var Location */
+    protected $location;
 
     public static function create()
     {
@@ -196,7 +199,7 @@ class RequestLog
     protected function setRequestBody($requestBody): RequestLog
     {
         if (is_array($requestBody) || is_object($requestBody)){
-            $requestBody = json_encode($requestBody);
+            $requestBody = var_export($requestBody,true);
         }
         $this->requestBody = $requestBody;
         return $this;
@@ -217,10 +220,23 @@ class RequestLog
     protected function setHeader($header): RequestLog
     {
         if (is_array($header)){
-            $header = json_encode($header);
+            $header = var_export($header,true);
         }
         $this->header = $header;
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getLocation(): ?Location
+    {
+        return $this->location;
+    }
+
+    protected function setLocation(Location $location = null):RequestLog
+    {
+        $this->location = $location;
     }
 
     /**
@@ -238,7 +254,7 @@ class RequestLog
     protected function setResponseBody($responseBody): RequestLog
     {
         if (is_array($responseBody)){
-            $responseBody = json_encode($responseBody);
+            $responseBody = var_export($responseBody,true);
         }
         $this->responseBody = $responseBody;
         return $this;
@@ -312,7 +328,7 @@ class RequestLog
     public function setCustomData($customData)
     {
         if (is_array($customData)){
-            $customData = json_encode($customData);
+            $customData = var_export($customData,true);
         }
         $this->customData = $customData;
         return $this;

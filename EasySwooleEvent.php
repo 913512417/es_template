@@ -22,7 +22,7 @@ class EasySwooleEvent implements Event
         //注册中间件
         Di::getInstance()->set('middleware',Middleware::class);
         //创建数据库连接
-        DbRegister::getInstance()->addDbConnection();
+//        DbRegister::getInstance()->addDbConnection();
 
     }
 
