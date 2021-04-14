@@ -17,5 +17,7 @@ class ReturnCode
     const PARAM_ERROR = 401;//参数错误
     const SIGN_ERROR = 402;//签名错误
 
+    const SYSTEM_ERROR = 500;//系统错误
+
 
 }

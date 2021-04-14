@@ -30,17 +30,25 @@ function udate() {
  */
 function writeLog(string $msg,$level = LoggerInterface::LOG_LEVEL_INFO, $data = null ,Location $location = null)
 {
-    $str = $msg."\n";
+    $str = $msg;
     if($data){
-        $str .= "[ DATA ] ";
+        $str .= "\n[ CUSTOM_DATA ] ";
         if(is_array($data) || is_object($data)){
             $str .= var_export($data,true);
         }else{
             $str .= $data;
         }
     }
+    if ($level == LoggerInterface::LOG_LEVEL_ERROR){
+        $error = error_get_last();
+        if (!$error){
+            $error = E_USER_ERROR;
+        }
+        \EasySwoole\EasySwoole\Trigger::getInstance()->error($str,$error,$location);
+    }else{
+        \EasySwoole\EasySwoole\Logger::getInstance()->log($str, $level, 'INFO');
+    }
 
-    \EasySwoole\Log\Logger::getInstance()->log($str, $level, 'INFO');
 }
 
 /**

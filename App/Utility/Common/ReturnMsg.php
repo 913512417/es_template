@@ -16,5 +16,7 @@ class ReturnMsg
         ReturnCode::PARAM_ERROR => "参数错误",
         ReturnCode::PARAM_MISS => "缺少必传参数",
         ReturnCode::SIGN_ERROR => '签名错误',
+
+        ReturnCode::SYSTEM_ERROR => '系统错误',
     ];
 }

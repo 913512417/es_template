@@ -1,14 +1,13 @@
 <?php
 
 
-namespace App\Utility\System;
-
+namespace App\Utility\Trigger;
 
 use EasySwoole\Log\LoggerInterface;
 use EasySwoole\Trigger\Location;
 use EasySwoole\Trigger\TriggerInterface;
 
-class Tigger implements TriggerInterface
+class CustomTrigger implements TriggerInterface
 {
     protected $logger;
 
@@ -20,14 +19,14 @@ class Tigger implements TriggerInterface
     public function error($msg, int $errorCode = E_USER_ERROR, Location $location = null)
     {
         if($location != null){
-            $msg .= "\n[ file ] {$location->getFile()} line:{$location->getLine()}";
+            $msg .= "\n[ FILE ] {$location->getFile()} line:{$location->getLine()}";
         }
         $this->logger->log($msg,$this->errorMapLogLevel($errorCode));
     }
 
     public function throwable(\Throwable $throwable)
     {
-        $msg = "{$throwable->getMessage()} \n[ file ]:{$throwable->getFile()} line:{$throwable->getLine()}";
+        $msg = "{$throwable->getMessage()} \n[ FILE ]:{$throwable->getFile()} line:{$throwable->getLine()}";
         $this->logger->log($msg,LoggerInterface::LOG_LEVEL_ERROR);
     }
 

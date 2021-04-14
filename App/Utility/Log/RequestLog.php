@@ -2,6 +2,7 @@
 namespace App\Utility\Log;
 
 use EasySwoole\EasySwoole\Logger;
+use EasySwoole\EasySwoole\Trigger;
 use EasySwoole\Http\Request;
 use EasySwoole\HttpClient\Bean\Response;
 use EasySwoole\Http\Response as ServerResponse;
@@ -26,7 +27,7 @@ class RequestLog
     /** @var mixed */
     protected $statusCode;
     /** @var mixed */
-    protected $errCode;
+    protected $errCode = 500;
     /** @var string */
     protected $errMsg;
     /** @var string */
@@ -43,15 +44,15 @@ class RequestLog
         return new static();
     }
 
-    public function httpClient(string $url,Response $response,HttpClient $request)
+    public function httpClient(string $url,Response $response,$postData)
     {
         $this->setUrl($url)
             ->setStatusCode($response->getStatusCode())
             ->setErrCode($response->getErrCode())
             ->setErrMsg($response->getErrMsg())
             ->setMethod($response->getRequestMethod())
-            ->setRequestBody($response->getRequestBody())
-            ->setHeader($request->getHeader())
+            ->setRequestBody($postData)
+            ->setHeader($response->getHeaders())
             ->setResponseBody($response->getBody());
         return $this;
     }
@@ -63,9 +64,9 @@ class RequestLog
             ->setMethod($request->getMethod())
             ->setClientIp($clientIp)
             ->setHeader($request->getHeaders())
-            ->setResponseBody($response->getBody())
+            ->setResponseBody($response->getBody()->__toString())
             ->setStatusCode($response->getStatusCode())
-            ->setRequestBody($request->getBody());
+            ->setRequestBody($request->getRequestParam());
         return $this;
     }
 
@@ -76,47 +77,56 @@ class RequestLog
         $log .= $this->logHeader();
         $log .= $this->logRequestBody();
         $log .= $this->logResponseBody();
-        $log .= $this->logCustomMsg();
         $log .= $this->logCustomData();
+        $log .= $this->logCustomMsg();
         $log .= $this->logError();
-        Logger::getInstance()->log($log,$this->getLogLevel());
+        if ($this->getLogLevel() == CustomLogger::LOG_LEVEL_ERROR){
+            $error = error_get_last();
+            if (!$error){
+                $error = E_USER_ERROR;
+            }
+            Trigger::getInstance()->error($log,$error,$this->getLocation());
+        }else{
+            Logger::getInstance()->log($log, $this->getLogLevel(), 'INFO');
+        }
     }
 
     protected function logHead()
     {
-        return $this->getStatusCode()." ".$this->getClientIp()." ".$this->getMethod()." ".$this->getUrl()."\n";
+        return $this->getStatusCode()." ".$this->getClientIp()." ".$this->getMethod()." ".$this->getUrl();
     }
 
     protected function logHeader()
     {
-        $log = "[ HEADER ]\n";
-        $log .= $this->getHeader()."\n";
+        $log = "\n[ HEADER ] ";
+        $log .= $this->getHeader();
         return $log;
     }
 
     protected function logRequestBody()
     {
-        $log = "[ REQUEST_BODY ]\n";
-        $log .= $this->getRequestBody()."\n";
+        $log = "\n[ REQUEST_BODY ] ";
+        $log .= $this->getRequestBody();
         return $log;
     }
 
     protected function logResponseBody()
     {
-        return "[ RESPONSE_BODY ]\n".$this->getResponseBody()."\n";
+        return "\n[ RESPONSE_BODY ] ".$this->getResponseBody();
     }
 
     protected function logError()
     {
         if ($this->getErrCode()){
-            return "[ ERROR ]\n".$this->getErrCode()." ".$this->getErrMsg()."\n";
+            return "\n[ ERROR ] ".$this->getErrCode().":".$this->getErrMsg();
         }
         return "";
     }
+
     protected function logCustomMsg()
     {
         if ($this->getCustomMsg()){
-            return "[ CUSTOM_MSG ]\n".$this->getCustomMsg()."\n";
+            return "\n[ CUSTOM_MSG ] ".$this->getCustomMsg();
         }
         return "";
     }
@@ -124,7 +134,7 @@ class RequestLog
     protected function logCustomData()
     {
         if ($this->getCustomData()){
-            return "[ CUSTOM_DATA ] ".$this->getCustomData()."\n";
+            return "\n[ CUSTOM_DATA ] ".$this->getCustomData();
         }
         return "";
     }
@@ -219,7 +229,7 @@ class RequestLog
      */
     protected function setHeader($header): RequestLog
     {
-        if (is_array($header)){
+        if (is_array($header) || is_object($header)){
             $header = var_export($header,true);
         }
         $this->header = $header;
@@ -234,9 +244,10 @@ class RequestLog
         return $this->location;
     }
 
-    protected function setLocation(Location $location = null):RequestLog
+    public function setLocation(Location $location = null):RequestLog
     {
         $this->location = $location;
+        return $this;
     }
 
     /**
@@ -253,7 +264,7 @@ class RequestLog
      */
     protected function setResponseBody($responseBody): RequestLog
     {
-        if (is_array($responseBody)){
+        if (is_array($responseBody) || is_object($responseBody)){
             $responseBody = var_export($responseBody,true);
         }
         $this->responseBody = $responseBody;
@@ -305,7 +316,7 @@ class RequestLog
     /**
      * @param string $errMsg
      */
-    protected function setErrMsg(string $errMsg): RequestLog
+    public function setErrMsg(string $errMsg): RequestLog
     {
         $this->errMsg = $errMsg;
         return $this;
@@ -327,7 +338,7 @@ class RequestLog
      */
     public function setCustomData($customData)
     {
-        if (is_array($customData)){
+        if (is_array($customData) || is_object($customData)){
             $customData = var_export($customData,true);
         }
         $this->customData = $customData;
@@ -355,7 +366,7 @@ class RequestLog
     /**
      * @return string
      */
-    public function getCustomMsg(): string
+    public function getCustomMsg(): ?string
     {
         return $this->customMsg;
     }

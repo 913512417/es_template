@@ -12,13 +12,15 @@ use EasySwoole\Log\LoggerInterface;
 
 class CustomLogger implements LoggerInterface
 {
+    const LOG_LEVEL_QEQUEST = 5;
+
     function log(?string $msg, int $logLevel = self::LOG_LEVEL_INFO, string $category = 'DEBUG'): string
     {
         $date = udate();
         $levelStr = $this->levelMap($logLevel);
         $filePath = $this->getPath();
         $str = "---------------------------------------------------------------\n";
-        $str .= "[{$date}][{$levelStr}]:[{$msg}]\n";
+        $str .= "[{$date}][{$levelStr}]:{$msg}\n";
         file_put_contents($filePath,"{$str}",FILE_APPEND|LOCK_EX);
         return $str;
     }
@@ -27,7 +29,7 @@ class CustomLogger implements LoggerInterface
     {
         $date = udate();
         $levelStr = $this->levelMap($logLevel);
-        echo "[{$date}][{$levelStr}]:[{$msg}]\n";
+        echo "[{$date}][{$levelStr}]:{$msg}\n";
     }
 
     public function getPath()
@@ -57,6 +59,8 @@ class CustomLogger implements LoggerInterface
                 return 'warning';
             case self::LOG_LEVEL_ERROR:
                 return 'error';
+            case self::LOG_LEVEL_QEQUEST:
+                return 'request';
             default:
                 return 'unknown';
         }

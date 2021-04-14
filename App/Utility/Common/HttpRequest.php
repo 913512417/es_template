@@ -1,10 +1,10 @@
 <?php
 namespace App\Utility\Common;
+
 use App\Utility\Log\CustomLogger;
 use App\Utility\Log\RequestLog;
 use EasySwoole\HttpClient\Bean\Response;
 use EasySwoole\HttpClient\HttpClient;
-use EasySwoole\Spl\SplArray;
 
 class HttpRequest
 {
@@ -22,19 +22,23 @@ class HttpRequest
     protected $autoWriteLog = true;
     /** @var bool  */
     protected $enableSSl = false;
+    /** @var null RequestLog */
+    protected $requestLog;
 
 
-    public function __construct(?string $url)
+    public function __construct(?string $url,$method = "Get")
     {
         $this->url = $url;
         $this->setHttp(new HttpClient($url));
+        $this->setMethod($method);
         $this->setTimeout(10.0);
         $this->setConnectTimeout(30.0);
+        $this->requestLog = RequestLog::create()->setLogLevel(CustomLogger::LOG_LEVEL_QEQUEST);
     }
     
-    public static function create(string $url = null)
+    public static function create(string $url = null,$method = "Get")
     {
-        return new static($url);
+        return new static($url,$method);
     }
 
     /**
@@ -125,7 +129,7 @@ class HttpRequest
      */
     public function setMethod(string $method = "GET"): HttpRequest
     {
-        $this->method = strtolower($method);
+        $this->method = strtoupper($method);
         return $this;
     }
 
@@ -186,9 +190,8 @@ class HttpRequest
      * Date: 2021/3/2
      * Time: 11:31
      * @param $bodyFormat $response body 返回结果格式 default json
-     * @return mixed
      */
-    public function send($bodyFormat = "json"):mixed
+    public function send($bodyFormat = "json")
     {
         switch ($this->getMethod()){
             case "POST":
@@ -202,10 +205,10 @@ class HttpRequest
                 break;
         }
         $this->setResponse($response);
+        $this->writeLog();
         if($response->getErrCode() != 0 || $response->getStatusCode() != 200){
             return false;
         }
-        $this->autoWriteLog();
         return $this->responseBodyToArray($bodyFormat);
     }
 
@@ -264,33 +267,18 @@ class HttpRequest
      * Date: 2021/3/5
      * Time: 09:53
      */
-    protected function autoWriteLog()
+    protected function writeLog()
     {
         if($this->getAutoWriteLog()){
-            $logLevel = CustomLogger::LOG_LEVEL_INFO;
-            if($this->response->getErrCode() != 0 || $this->response->getStatusCode() != 200){
-                $logLevel = CustomLogger::LOG_LEVEL_ERROR;
-            }
-            RequestLog::create()->httpClient($this->url,$this->getResponse(),$this->http)
-                ->setLogLevel($logLevel)
+            $this->requestLog->httpClient($this->url,$this->getResponse(),$this->getPostData())
                 ->writeLog();
         }
     }
 
-    /**
-     * Notes: 手动写入日志
-     * User: Victor
-     * Date: 2021/3/5
-     * Time: 09:55
-     * @param int $logLevel
-     * @param RequestLog $requestLog
-     */
-    public function handWriteLog($logLevel = CustomLogger::LOG_LEVEL_INFO,RequestLog $requestLog)
+    public function setLogData($customMsg,$customData = []):HttpRequest
     {
-        $this->setAutoWriteLog(false);
-        $requestLog->httpClient($this->url,$this->getResponse(),$this->http)
-            ->setLogLevel($logLevel)
-            ->writeLog();
+        $this->requestLog->setCustomMsg($customMsg)->setCustomData($customData);
+        return $this;
     }
 
 
