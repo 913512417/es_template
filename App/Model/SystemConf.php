@@ -11,6 +11,6 @@ class SystemConf extends BaseModel
 
     public function getConf($key)
     {
-        
+
     }
 }
