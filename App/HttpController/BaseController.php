@@ -180,7 +180,7 @@ class BaseController extends Controller
      * @param \Throwable $throwable
      * @return RequestLog
      */
-    protected function writeRequestLog($logLevel = CustomLogger::LOG_LEVEL_INFO,\Throwable $throwable = null)
+    protected function writeRequestLog($logLevel = CustomLogger::LOG_LEVEL_INFO,\Throwable $throwable = null):RequestLog
     {
         $this->requestLog = RequestLog::create()->setLogLevel($logLevel);
         if($throwable){
