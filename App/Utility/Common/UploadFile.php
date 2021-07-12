@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: admin
- * Date: 2019/11/25
- * Time: 0:06
- */
-
 namespace App\Utility\Common;
 use EasySwoole\Utility\File;
 class UploadFile
@@ -50,16 +43,17 @@ class UploadFile
     }
 
     /**
-     * 检测
+     * 检测并上传
      * @return bool
      */
-    public function check()
+    public function checkAndUpload()
     {
         if(!$this->checkExt() || !$this->checkMediaType() || !$this->checkSize()) return false;
         $saveName = $this->buildSaveName();
         $filename = $this->baseFile.$saveName;
         if(!File::createDirectory(dirname($filename))) return false;
         $this->filename = $filename;
+        $this->file->moveTo($this->filename);
         return true;
     }
 
@@ -75,6 +69,7 @@ class UploadFile
      */
     private function checkExt()
     {
+        if(!isset($this->config["ext"])) return true;
         $ext = $this->config['ext'];
         if (is_string($ext)) {
             $ext = explode(',', $this->config['ext']);
@@ -93,6 +88,7 @@ class UploadFile
      */
     private function checkMediaType()
     {
+        if(!isset($this->config["media_type"])) return true;
         $ext = $this->config['media_type'];
         if (is_string($ext)) {
             $ext = explode(',', $this->config['media_type']);
@@ -110,6 +106,7 @@ class UploadFile
      */
     private function checkSize()
     {
+        if(!isset($this->config["size"])) return true;
         if($this->file->getSize() > $this->config['size']){
             $this->error = '文件大小超出限制！';
             return false;
@@ -140,9 +137,12 @@ class UploadFile
      */
     private function buildSaveName()
     {
+        if(!isset($this->config["path"])){
+            $this->config["path"] = "/";
+        }
         $savename = trim($this->config['path'],'/').'/';
         $savename .= $this->autoBuildName();
-        $savename .= '.' . pathinfo($this->file->getClientFilename(), PATHINFO_EXTENSION);
+        $savename .= '.'  . pathinfo($this->file->getClientFilename(), PATHINFO_EXTENSION);
         $this->saveName = $savename;
         return $savename;
     }

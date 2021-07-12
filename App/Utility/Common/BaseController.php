@@ -1,18 +1,17 @@
 <?php
+namespace App\Utility\Common;
 
-
-namespace App\HttpController;
-
-use App\Utility\Common\ReturnCode;
-use App\Utility\Common\ReturnMsg;
+use App\Define\ReturnCode;
+use App\Define\ReturnMsg;
 use App\Utility\Log\CustomLogger;
 use App\Utility\Log\RequestLog;
 use EasySwoole\Component\Di;
 use EasySwoole\Http\AbstractInterface\Controller;
 use EasySwoole\Http\Message\Status;
 
-class BaseController extends Controller
+abstract class BaseController extends Controller
 {
+    use Crud;
     protected $middlewareRule = [];
 
     /** @var RequestLog */
@@ -58,6 +57,7 @@ class BaseController extends Controller
             ->setErrMsg($throwable->getMessage())
             ->setLocation(getLocation($throwable));
         $this->returnJson(ReturnCode::SYSTEM_ERROR);
+        $this->response()->end();
     }
 
     protected function middleware()
@@ -88,7 +88,10 @@ class BaseController extends Controller
         if (!$this->response()->isEndResponse()) {
             //兼容两种返回模式
             if(is_array($returnCode)){
-                if(!isset($returnCode['msg'])) $returnCode['msg'] = ReturnMsg::RERTURN_MSG[$returnCode['errcode']] ?? "";
+                if(!isset($returnCode['msg'])) $returnCode['msg'] = ReturnMsg::RERTURN_MSG[$returnCode['errcode']??""] ?? "";
+                if (!isset($returnCode['data'])){
+                    $returnCode['data'] = null;
+                }
                 $result = $returnCode;
             }else{
                 $result = [
@@ -100,6 +103,7 @@ class BaseController extends Controller
             $this->response()->write(json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $this->response()->withHeader('Content-type', 'application/json;charset=utf-8');
             $this->response()->withStatus(Status::CODE_OK);
+            $this->response()->end();
             return true;
         } else {
             return false;
@@ -111,7 +115,7 @@ class BaseController extends Controller
      * User: Victor
      * Date: 2021/2/21
      * Time: 17:19
-     * @param $returnCode
+     * @param $data
      * @return bool
      */
     protected function returnImg($data)
@@ -120,6 +124,27 @@ class BaseController extends Controller
             $this->response()->write($data);
             $this->response()->withHeader('Content-type', 'image/jpg');
             $this->response()->withStatus(Status::CODE_OK);
+            $this->response()->end();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Notes: 返回文本格式
+     * User: Victor
+     * Date: 2021/2/21
+     * Time: 17:19
+     * @param string $text
+     * @return bool
+     */
+    protected function returnText(string $text)
+    {
+        if (!$this->response()->isEndResponse()) {
+            $this->response()->write($text);
+            $this->response()->withStatus(Status::CODE_OK);
+            $this->response()->end();
             return true;
         } else {
             return false;
@@ -134,26 +159,7 @@ class BaseController extends Controller
      */
     protected function input($name = null, $default = null)
     {
-        if($name){
-            $value = $this->request()->getRequestParam($name);
-            if(!$value){
-                $content = $this->request()->getBody()->__toString();
-                if($content){
-                    $raw_array = json_decode($content, true);
-                    $value = isset($raw_array[$name]) ? $raw_array[$name] : '';
-                }
-            }
-            return $value ? $value : $default;
-        }else{
-            $raw_array = $this->request()->getRequestParam();
-            if(!$raw_array){
-                $content = $this->request()->getBody()->__toString();
-                if($content){
-                    $raw_array = json_decode($content, true);
-                }
-            }
-            return $raw_array;
-        }
+        return getRequestData($this->request(),$name,$default);
     }
 
     /**
@@ -188,5 +194,11 @@ class BaseController extends Controller
             $this->requestLog->setLocation(getLocation($throwable));
         }
         return $this->requestLog;
+    }
+
+    //取消日志写入
+    protected function cancelRequestLog()
+    {
+        $this->requestLog = null;
     }
 }

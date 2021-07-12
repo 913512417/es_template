@@ -20,8 +20,6 @@ class HttpRequest
     protected $method = "GET";
     /** @var bool  */
     protected $autoWriteLog = true;
-    /** @var bool  */
-    protected $enableSSl = false;
     /** @var null RequestLog */
     protected $requestLog;
 
@@ -78,24 +76,6 @@ class HttpRequest
         return $this;
     }
 
-    /**
-     * @return bool
-     */
-    public function getEnableSSl(): bool
-    {
-        return $this->enableSSl;
-    }
-
-    /**
-     * @param bool $enableSSl
-     * @return HttpRequest
-     */
-    public function setEnableSSl(bool $enableSSl): HttpRequest
-    {
-        $this->http->setEnableSSL($enableSSl);
-        $this->enableSSl = $enableSSl;
-        return $this;
-    }
 
     /**
      * @return array
@@ -258,7 +238,7 @@ class HttpRequest
 
     public function responseBodyXml():array
     {
-        //todo
+        return xmlToArray($this->response->getBody());
     }
 
     /**

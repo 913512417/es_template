@@ -8,7 +8,7 @@
 
 namespace App\Utility\System;
 
-use EasySwoole\EasySwoole\Core;
+use EasySwoole\Component\Di;
 use EasySwoole\EasySwoole\Trigger;
 use Swoole\Table;
 use EasySwoole\Component\Singleton;
@@ -47,20 +47,15 @@ class EventNotify
 
     private function onNotify(string $key,string $msg)
     {
-        if(Core::getInstance()->isDev()) return;
         $info = $this->evenTable->get($key);
         //同一种消息在十分钟内不再记录
         $this->evenTable->set($key,["expire"=>time() + 10 * 60]);
         if(!empty($info)) return;
         try{
-            //todo 实现通知开发者
-            preg_match("/\[ INFO ] (.*?)\n\[ DATA ]/i",$msg,$match);
-            if($match){
-                $msg = $match[1];
-            }else{
-                $msg = "[".date('H:i:s')."]系统错误!";
+            $obj = Di::getInstance()->get('errorNotify');
+            if ($obj){
+                call_user_func($obj,$msg);
             }
-//            systemErrorNotice(config('mobile_msg.msg_prefix').$msg);
         }catch (\Throwable $throwable){
             //避免死循环
             Trigger::getInstance()->error($throwable->getMessage());

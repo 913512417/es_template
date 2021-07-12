@@ -9,6 +9,7 @@ namespace App\Utility\System;
 
 use EasySwoole\Component\Singleton;
 use EasySwoole\EasySwoole\Config;
+use EasySwoole\EasySwoole\Core;
 use EasySwoole\ORM\Db\Config as DbConfig;
 use EasySwoole\ORM\Db\Connection;
 use EasySwoole\ORM\DbManager;
@@ -23,7 +24,8 @@ class DbRegister
      */
     protected function getDbConf()
     {
-        $file = Config::getInstance()->getConf('MYSQL_CONF');
+        $mode = Core::getInstance()->runMode();
+        $file = EASYSWOOLE_ROOT."/db_".$mode.".php";
         if(file_exists($file)){
             $data = require $file;
             return $data;

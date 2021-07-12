@@ -18,7 +18,6 @@ class Middleware
     public function __construct($default_namespace = '')
     {
         if($default_namespace) $this->default_namespace = $default_namespace;
-
     }
 
     public function dispath(Request $request,$rule,$actionName)
@@ -27,7 +26,7 @@ class Middleware
             foreach ($rule as $key => $value){
                 if(!is_numeric($key)){
                     $middleware = ucfirst($key);
-                    if(!$this->isVerify($actionName,$value)) return true;
+                    if(!$this->isVerify($actionName,$value)) continue;
                 }else{
                     $middleware = ucfirst($value);
                 }

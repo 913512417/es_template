@@ -22,6 +22,7 @@ class ExceptionHandler
         $response->write(nl2br('系统错误！'));
         RequestLog::create()->httpServer($request,$response)
             ->setLogLevel(CustomLogger::LOG_LEVEL_ERROR)
+            ->setErrMsg($exception->getMessage())
             ->setLocation(getLocation($exception))
             ->writeLog();
     }

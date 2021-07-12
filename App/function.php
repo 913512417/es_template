@@ -6,6 +6,7 @@
  * Time: 20:52
  * intro:助手函数
  */
+use EasySwoole\Http\Request;
 use \EasySwoole\Log\LoggerInterface;
 use EasySwoole\Trigger\Location;
 
@@ -72,4 +73,28 @@ function getLocation(Throwable $throwable = null):Location
         $location->setLine($throwable->getLine());
     }
     return $location;
+}
+
+function getRequestData(Request $request,$name,$default = "")
+{
+    if($name){
+        $value = $request->getRequestParam($name);
+        if(!$value){
+            $content = $request->getBody()->__toString();
+            if($content){
+                $raw_array = json_decode($content, true);
+                $value = isset($raw_array[$name]) ? $raw_array[$name] : '';
+            }
+        }
+        return $value ? $value : $default;
+    }else{
+        $raw_array = $request->getRequestParam();
+        if(!$raw_array){
+            $content = $request->getBody()->__toString();
+            if($content){
+                $raw_array = json_decode($content, true);
+            }
+        }
+        return $raw_array;
+    }
 }
